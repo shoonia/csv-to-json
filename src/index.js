@@ -18,7 +18,7 @@ const greenColor = '\x1b[32m';
 
 function transformSolution({ id, data }) {
   return {
-    _id: id.replace(/(_)/,'-'),
+    _id: id.replace(/(_)/g,'-'),
     contentHtml: data.contentHtml || undefined,
     subtitle: data.subtitle || undefined,
     title: data.title || undefined,
