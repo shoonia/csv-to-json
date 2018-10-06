@@ -23,6 +23,7 @@ const optionsJSON = {
 };
 
 const optionsCSV = {
+  headers: 'key',
   delimiter: ',',
   wrap: false
 };
