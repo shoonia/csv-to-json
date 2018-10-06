@@ -1,13 +1,14 @@
 const fs = require('fs');
-const util = require('util');
 const path = require('path');
-const unescape = require('unescape-js')
+const unescape = require('unescape-js');
 const csvjson = require('csvjson');
-const ids = require('./ids');
 
-const writeFile = util.promisify(fs.writeFile);
-const readFile = util.promisify(fs.readFile);
-const jsonPath = path.resolve(__dirname, '../json', 'solution.json');
+const ids = require('./ids');
+const csvInput = path.resolve(process.argv[2] || 'solution.csv');
+
+const distDir = path.resolve(__dirname, '../dist');
+const jsonOutput = path.resolve(distDir, 'solution.json');
+const csvOutput = path.resolve(distDir, 'solution.csv');
 
 // console colors: ----------
 const reset = '\x1b[0m';
@@ -16,9 +17,19 @@ const blueColor = '\x1b[34m';
 const greenColor = '\x1b[32m';
 // --------------------------
 
+const optionsJSON = {
+  delimiter: ',',
+  quote: '"'
+};
+
+const optionsCSV = {
+  delimiter: ',',
+  wrap: false
+};
+
 function transformSolution({ id, data }) {
   return {
-    _id: id.replace(/(_)/g,'-'),
+    _id: id.replace(/(_)/g, '-'),
     contentHtml: data.contentHtml || undefined,
     subtitle: data.subtitle || undefined,
     title: data.title || undefined,
@@ -28,9 +39,9 @@ function transformSolution({ id, data }) {
     readTime: data.readTime || undefined,
     allowContact: data.allowContact || undefined,
     actionText: data.action ? data.action.text : undefined,
-    actionUrl: data.action ? data.action.url : undefined,
-  }
-};
+    actionUrl: data.action ? data.action.url : undefined
+  };
+}
 
 function findSolutionById(solution) {
   return function(id) {
@@ -49,26 +60,34 @@ function parseSolution({ id, data }) {
   };
 }
 
-async function main() {
-  const csvPath = process.argv[2] || 'solution.csv'; // Path to file
-  const options = {
-    delimiter: ',',
-    quote: '"'
-  };
-
+function main() {
   try {
-    const csvFile = await readFile(path.resolve(csvPath), 'utf8');
-    const json = csvjson.toObject(csvFile, options);
-    const result = ids
+    if (!fs.existsSync(distDir)) {
+      fs.mkdirSync(distDir);
+    }
+
+    const csv = fs.readFileSync(csvInput, 'utf8');
+    const json = csvjson.toObject(csv, optionsJSON);
+
+    const jsonResult = ids
       .map(findSolutionById(json))
       .map(parseSolution)
       .map(transformSolution);
-    
-    await writeFile(jsonPath, JSON.stringify(result));
 
-    console.info(greenColor, 'Yeah! Done! Your file is here:\n', blueColor, jsonPath, reset);
+    const csvResult = csvjson.toCSV(jsonResult, optionsCSV);
+
+    fs.writeFileSync(jsonOutput, JSON.stringify(jsonResult));
+    fs.writeFileSync(csvOutput, csvResult);
+
+    console.info(
+      greenColor,
+      'Yeah! Done! Your files are here:',
+      blueColor,
+      `\n${jsonOutput}\n${csvOutput}`,
+      reset
+    );
   } catch (error) {
-    console.error(redColor, 'Oh, no! ', error.message, reset);
+    console.error(redColor, `Oh, no! ${error.message}`, reset);
   }
 }
 
