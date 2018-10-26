@@ -7,7 +7,7 @@
   },
   "dependencies": {
     "csvjson": "^5.1.0",
-    "unescape-js": "^1.1.0"
+    "unescape-js": "^1.1.1"
   },
   "keywords": [],
   "author": "",
